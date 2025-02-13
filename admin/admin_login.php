@@ -7,28 +7,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password = $_POST['password'];
     $remember = isset($_POST['remember']);
 
-    // Dummy admin credentials (Replace with database authentication)
-    if ($username === "admin" && $password === "1234") {
-        $_SESSION['admin'] = true;
+    // Prepare and execute the query to fetch admin details
+    $stmt = $conn->prepare("SELECT * FROM admins WHERE username = ?");
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-        // ✅ If "Remember Me" is checked, store credentials in cookies
-        if ($remember) {
-            setcookie("admin_username", $username, time() + (86400 * 30), "/"); // 30 days
-            setcookie("admin_password", $password, time() + (86400 * 30), "/"); // 30 days
+    if ($result->num_rows > 0) {
+        $admin = $result->fetch_assoc();
+
+        // Verify the password
+        if (password_verify($password, $admin['password'])) {
+            $_SESSION['admin'] = true;
+
+            // If "Remember Me" is checked, store credentials in cookies
+            if ($remember) {
+                setcookie("admin_username", $username, time() + (86400 * 30), "/"); // 30 days
+                setcookie("admin_password", $password, time() + (86400 * 30), "/"); // 30 days
+            } else {
+                // If not checked, delete any existing cookies
+                setcookie("admin_username", "", time() - 3600, "/");
+                setcookie("admin_password", "", time() - 3600, "/");
+            }
+
+            header("Location: dashboard.php");
+            exit();
         } else {
-            // If not checked, delete any existing cookies
-            setcookie("admin_username", "", time() - 3600, "/");
-            setcookie("admin_password", "", time() - 3600, "/");
+            $error = "Invalid Username or Password!";
         }
-
-        header("Location: dashboard.php");
-        exit();
     } else {
         $error = "Invalid Username or Password!";
     }
 }
 
-// ✅ Retrieve saved username & password from cookies (if available)
+// Retrieve saved username & password from cookies (if available)
 $savedUsername = isset($_COOKIE['admin_username']) ? $_COOKIE['admin_username'] : "";
 $savedPassword = isset($_COOKIE['admin_password']) ? $_COOKIE['admin_password'] : "";
 
