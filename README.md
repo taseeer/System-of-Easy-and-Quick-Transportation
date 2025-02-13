@@ -40,6 +40,7 @@ cd System-of-Easy-and-Quick-Transportation
 ```
 📂 System-of-Easy-and-Quick-Transportation
 ├── 📂 admin         # Admin panel for managing buses
+      ├── 📂 assets  # Admin lit3 Plugin and dists
 ├── 📂 css           # Styles and frontend design
 ├── 📂 db            # Database files and configurations
 ├── 📂 js            # JavaScript for interactivity
