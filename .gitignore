@@ -1,0 +1,7 @@
+admin/assets/
+# Ignore the vendor directory
+/vendor/
+
+# Ignore composer files
+/composer.json
+/composer.lock
