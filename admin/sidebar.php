@@ -1,4 +1,3 @@
-<!-- sidebar.php -->
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <a href="#" class="brand-link">
         <span class="brand-text font-weight-light">Admin Dashboard</span>
@@ -28,6 +27,12 @@
                     <a href="manage_schedules.php" class="nav-link">
                         <i class="nav-icon fas fa-calendar-alt"></i>
                         <p>Manage Schedules</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="settings.php" class="nav-link">
+                        <i class="nav-icon fas fa-cog"></i>
+                        <p>Settings</p>
                     </a>
                 </li>
                 <li class="nav-item">

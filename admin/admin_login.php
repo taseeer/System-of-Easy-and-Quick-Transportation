@@ -19,7 +19,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Verify the password
         if (password_verify($password, $admin['password'])) {
             $_SESSION['admin'] = true;
-
+            $_SESSION['admin_username'] = $username; // Add this line
             // If "Remember Me" is checked, store credentials in cookies
             if ($remember) {
                 setcookie("admin_username", $username, time() + (86400 * 30), "/"); // 30 days
