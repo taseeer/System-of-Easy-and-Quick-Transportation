@@ -9,16 +9,16 @@
 <script src="../admin/assets/dist/js/adminlte.min.js"></script>
 <script src="../js/search.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    // Initialize Bootstrap 4 toasts
-    $('.toast').toast({
-        autohide: true,
-        delay: 5000 // 5 seconds
-    });
-
-    // Show all toasts
-    $('.toast').toast('show');
-});
-</script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize Bootstrap toasts
+            var toasts = document.querySelectorAll('.toast');
+            toasts.forEach(function (toast) {
+                new bootstrap.Toast(toast, {
+                    autohide: true,
+                    delay: 5000 // 5 seconds
+                }).show();
+            });
+        });
+    </script>
 </body>
 </html>
