@@ -12,21 +12,25 @@ function setMessage($type, $text) {
 
 // Function to check if a city can be deleted (no foreign key constraints)
 function canDeleteCity($conn, $cityId) {
-    // Check if there are any dependent records in bus_stops or routes
-    $busStopsQuery = $conn->prepare("SELECT COUNT(*) FROM bus_stops WHERE city_id = ?");
+    // Check if there are any dependent records in bus_stops
+    $busStopsQuery = $conn->prepare("SELECT COUNT(*) AS count FROM bus_stops WHERE city_id = ?");
     $busStopsQuery->bind_param("i", $cityId);
     $busStopsQuery->execute();
-    $busStopsQuery->bind_result($busStopsCount);
-    $busStopsQuery->fetch();
+    $busStopsResult = $busStopsQuery->get_result();
+    $busStopsRow = $busStopsResult->fetch_assoc();
+    $busStopsCount = $busStopsRow['count'];
     $busStopsQuery->close();
 
-    $routesQuery = $conn->prepare("SELECT COUNT(*) FROM routes WHERE from_city_id = ? OR to_city_id = ?");
+    // Check if there are any dependent records in routes
+    $routesQuery = $conn->prepare("SELECT COUNT(*) AS count FROM routes WHERE from_city_id = ? OR to_city_id = ?");
     $routesQuery->bind_param("ii", $cityId, $cityId);
     $routesQuery->execute();
-    $routesQuery->bind_result($routesCount);
-    $routesQuery->fetch();
+    $routesResult = $routesQuery->get_result();
+    $routesRow = $routesResult->fetch_assoc();
+    $routesCount = $routesRow['count'];
     $routesQuery->close();
 
+    // Return true if there are no dependent records in either table
     return ($busStopsCount == 0 && $routesCount == 0);
 }
 
