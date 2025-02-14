@@ -3,6 +3,17 @@
         <span class="brand-text font-weight-light">Admin Dashboard</span>
     </a>
     <div class="sidebar">
+        <!-- Profile Section -->
+        <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+            <div class="image">
+                <img src="../uploads/Taseer.png" class="img-circle elevation-2" alt="User Image">
+            </div>
+            <div class="info">
+                <a href="admin_profile.php" class="d-block">Taseer Ullah</a> <!-- Replace with dynamic name if needed -->
+            </div>
+        </div>
+
+        <!-- Navigation Menu -->
         <nav class="mt-2">
             <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
                 <li class="nav-item">

@@ -1,178 +1,220 @@
 <?php
-session_start();
+include "admin_auth.php";
 require '../db/db_connect.php';
-
-if (!isset($_SESSION['admin'])) {
-    header("Location: login.php");
-    exit();
-}
-
 $error = '';
 $success = '';
-
-// Fetch admin details for pre-filling the form
 $username = $_SESSION['admin_username'];
+
 $stmt = $conn->prepare("SELECT * FROM admins WHERE username = ?");
 $stmt->bind_param("s", $username);
 $stmt->execute();
 $result = $stmt->get_result();
 $admin = $result->fetch_assoc();
 
+$showProfileForm = false;
+$showPasswordForm = false;
+
 // Handle Profile Update
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_profile'])) {
+    $showProfileForm = true; // Keep profile form open
     $email = $_POST['email'];
     $phone_number = $_POST['phone_number'];
 
-    if (empty($email) || empty($phone_number)) {
-        $error = "Email and phone number are required.";
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Invalid email format.";
+    } elseif (!preg_match("/^[0-9]{10,15}$/", $phone_number)) {
+        $error = "Invalid phone number format.";
     } else {
         $updateStmt = $conn->prepare("UPDATE admins SET email = ?, phone_number = ? WHERE username = ?");
         $updateStmt->bind_param("sss", $email, $phone_number, $username);
         if ($updateStmt->execute()) {
             $success = "Profile updated successfully.";
+            $showProfileForm = false; // Close form on success
         } else {
             $error = "Failed to update profile.";
+        }
+    }
+
+    // Handle profile picture upload
+    if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['size'] > 0) {
+        $profile_picture = $_FILES['profile_picture'];
+        $target_dir = "uploads/";
+        $target_file = $target_dir . basename($profile_picture["name"]);
+
+        if (move_uploaded_file($profile_picture["tmp_name"], $target_file)) {
+            $updateStmt = $conn->prepare("UPDATE admins SET profile_pic = ? WHERE username = ?");
+            $updateStmt->bind_param("ss", $target_file, $username);
+            if ($updateStmt->execute()) {
+                $success = "Profile picture updated successfully.";
+                $showProfileForm = false; // Close form on success
+            }
+        } else {
+            $error = "Failed to upload profile picture.";
         }
     }
 }
 
 // Handle Password Change
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['change_password'])) {
+    $showPasswordForm = true; // Keep password form open
     $currentPassword = $_POST['current_password'];
     $newPassword = $_POST['new_password'];
     $confirmPassword = $_POST['confirm_password'];
 
     if ($newPassword !== $confirmPassword) {
         $error = "New password and confirm password do not match.";
-    } else {
-        if (password_verify($currentPassword, $admin['password'])) {
-            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-            $updateStmt = $conn->prepare("UPDATE admins SET password = ? WHERE username = ?");
-            $updateStmt->bind_param("ss", $hashedPassword, $username);
-            if ($updateStmt->execute()) {
-                $success = "Password updated successfully.";
-            } else {
-                $error = "Failed to update password.";
-            }
+    } elseif (password_verify($currentPassword, $admin['password'])) {
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+        $updateStmt = $conn->prepare("UPDATE admins SET password = ? WHERE username = ?");
+        $updateStmt->bind_param("ss", $hashedPassword, $username);
+        if ($updateStmt->execute()) {
+            $success = "Password updated successfully.";
+            $showPasswordForm = false; // Close form on success
         } else {
-            $error = "Current password is incorrect.";
+            $error = "Failed to update password.";
         }
+    } else {
+        $error = "Current password is incorrect.";
     }
 }
 ?>
 
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Admin Panel | Settings</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <?php include 'header.php'; ?>
+    <style>
+        .form-container { display: none; }
+        .full-width-btn { width: 100%; margin-bottom: 10px; }
+        .toast {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: none;
+            z-index: 1000;
+        }
+        .toast.error { background: #dc3545; }
+    </style>
 </head>
-
-<body class="hold-transition sidebar-mini">
+<body>
     <div class="wrapper">
         <?php include 'sidebar.php'; ?>
-
         <div class="content-wrapper">
             <section class="content-header">
-                <div class="container-fluid">
-                    <div class="row mb-2">
-                        <div class="col-sm-6">
-                            <h1>Settings</h1>
-                        </div>
-                    </div>
-                </div>
+                <h1>Settings</h1>
             </section>
-
             <section class="content">
                 <div class="container-fluid">
-                    <div class="row">
-                        <!-- Profile Management -->
-                        <div class="col-md-6">
-                            <div class="card card-primary">
-                                <div class="card-header">
-                                    <h3 class="card-title">Update Profile</h3>
-                                </div>
-                                <form action="" method="POST">
-                                    <div class="card-body">
-                                        <?php if ($error && isset($_POST['update_profile'])): ?>
-                                            <div class="alert alert-danger"><?= $error ?></div>
-                                        <?php endif; ?>
-                                        <?php if ($success && isset($_POST['update_profile'])): ?>
-                                            <div class="alert alert-success"><?= $success ?></div>
-                                        <?php endif; ?>
-                                        <div class="form-group">
-                                            <label for="email">Email</label>
-                                            <input type="email" class="form-control" id="email" name="email" value="<?= htmlspecialchars($admin['email']) ?>" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="phone_number">Phone Number</label>
-                                            <input type="text" class="form-control" id="phone_number" name="phone_number" value="<?= htmlspecialchars($admin['phone_number']) ?>" required>
-                                        </div>
-                                    </div>
-                                    <div class="card-footer">
-                                        <button type="submit" name="update_profile" class="btn btn-primary">Update Profile</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
+                    <button id="showProfileForm" class="btn btn-primary full-width-btn">Update Profile</button>
+                    <button id="showPasswordForm" class="btn btn-danger full-width-btn">Change Password</button>
 
-                        <!-- Change Password -->
-                        <div class="col-md-6">
-                            <div class="card card-primary">
-                                <div class="card-header">
-                                    <h3 class="card-title">Change Password</h3>
-                                </div>
-                                <form action="" method="POST">
-                                    <div class="card-body">
-                                        <?php if ($error && isset($_POST['change_password'])): ?>
-                                            <div class="alert alert-danger"><?= $error ?></div>
-                                        <?php endif; ?>
-                                        <?php if ($success && isset($_POST['change_password'])): ?>
-                                            <div class="alert alert-success"><?= $success ?></div>
-                                        <?php endif; ?>
-                                        <div class="form-group">
-                                            <label for="current_password">Current Password</label>
-                                            <input type="password" class="form-control" id="current_password" name="current_password" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="new_password">New Password</label>
-                                            <input type="password" class="form-control" id="new_password" name="new_password" required>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="confirm_password">Confirm New Password</label>
-                                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
-                                        </div>
-                                    </div>
-                                    <div class="card-footer">
-                                        <button type="submit" name="change_password" class="btn btn-primary">Change Password</button>
-                                    </div>
-                                </form>
+                    <div id="toastContainer">
+                        <?php if ($success): ?>
+                            <div class="toast" id="successToast"><?= $success ?></div>
+                        <?php endif; ?>
+                        <?php if ($error): ?>
+                            <div class="toast error" id="errorToast"><?= $error ?></div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div id="profileForm" class="card card-primary form-container" <?php if ($showProfileForm) echo 'style="display:block;"'; ?>>
+                        <div class="card-header"><h3>Update Profile</h3></div>
+                        <form action="" method="POST" enctype="multipart/form-data">
+                            <div class="card-body">
+                                <label>Email:</label>
+                                <input type="email" class="form-control" name="email" value="<?= htmlspecialchars($admin['email']) ?>" required>
+                                
+                                <label>Phone Number:</label>
+                                <input type="text" class="form-control" name="phone_number" value="<?= htmlspecialchars($admin['phone_number']) ?>" required>
+                                
+                                <label>Profile Picture:</label>
+                                <input type="file" class="form-control" name="profile_picture">
+                                
+                                <p>Current Profile Picture:</p>
+                                <?php if (!empty($admin['profile_pic'])): ?>
+                                    <img src="<?= htmlspecialchars($admin['profile_pic']) ?>" alt="Profile Picture" style="max-width: 100px;">
+                                <?php else: ?>
+                                    <p>No profile picture uploaded.</p>
+                                <?php endif; ?>
                             </div>
-                        </div>
+                            <button type="submit" name="update_profile" class="btn btn-primary">Save</button>
+                        </form>
+                    </div>
+                    
+                    <div id="passwordForm" class="card card-primary form-container" <?php if ($showPasswordForm) echo 'style="display:block;"'; ?>>
+                        <div class="card-header"><h3>Change Password</h3></div>
+                        <form action="" method="POST">
+                            <div class="card-body">
+                                <label>Current Password:</label>
+                                <input type="password" class="form-control" name="current_password" required>
+                                
+                                <label>New Password:</label>
+                                <input type="password" class="form-control" name="new_password" required>
+                                
+                                <label>Confirm New Password:</label>
+                                <input type="password" class="form-control" name="confirm_password" required>
+                            </div>
+                            <button type="submit" name="change_password" class="btn btn-danger">Change</button>
+                        </form>
                     </div>
                 </div>
             </section>
         </div>
-
         <?php include 'footer.php'; ?>
     </div>
-
-    <!-- Toastr -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-
     <script>
-        <?php if ($success): ?>
-            toastr.success('<?= $success ?>', 'Success', { timeOut: 5000 });
-        <?php endif; ?>
-        <?php if ($error): ?>
-            toastr.error('<?= $error ?>', 'Error', { timeOut: 5000 });
-        <?php endif; ?>
-    </script>
-</body>
+        document.getElementById("showProfileForm").addEventListener("click", function() {
+    var profileForm = document.getElementById("profileForm");
+    var passwordForm = document.getElementById("passwordForm");
 
+    if (profileForm.style.display === "none" || profileForm.style.display === "") {
+        profileForm.style.display = "block";
+        passwordForm.style.display = "none";
+    } else {
+        profileForm.style.display = "none";
+    }
+});
+
+document.getElementById("showPasswordForm").addEventListener("click", function() {
+    var profileForm = document.getElementById("profileForm");
+    var passwordForm = document.getElementById("passwordForm");
+
+    if (passwordForm.style.display === "none" || passwordForm.style.display === "") {
+        passwordForm.style.display = "block";
+        profileForm.style.display = "none";
+    } else {
+        passwordForm.style.display = "none";
+    }
+});
+
+        function showToast(id) {
+            let toast = document.getElementById(id);
+            if (toast) {
+                toast.style.display = "block";
+                setTimeout(() => {
+                    toast.style.opacity = "1";
+                }, 100);
+                setTimeout(() => {
+                    toast.style.opacity = "0";
+                    setTimeout(() => {
+                        toast.style.display = "none";
+                    }, 500);
+                }, 3000);
+            }
+        }
+
+        window.onload = function() {
+            showToast("successToast");
+            showToast("errorToast");
+        };
+    </script>
+
+</body>
 </html>

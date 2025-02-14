@@ -98,7 +98,8 @@ $companies_count = $companies_result->fetch_row()[0];?>
                 
             </div>
         </section>
+        <?php include 'footer.php'; ?>
     </div>
 
-    <?php include 'footer.php'; ?>
+ 
 </div>
