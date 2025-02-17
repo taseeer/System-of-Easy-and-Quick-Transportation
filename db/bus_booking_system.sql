@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 13, 2025 at 05:27 PM
+-- Generation Time: Feb 17, 2025 at 07:32 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -43,7 +43,9 @@ CREATE TABLE `admins` (
 --
 
 INSERT INTO `admins` (`id`, `profile_pic`, `name`, `username`, `password`, `email`, `phone_number`, `created_at`) VALUES
-(1, 'Taseer.png', 'Admin User', 'admin', '$2y$10$MsG.XN4eEAiTmnPC7spopun4/.2SMMgOzUoBgdmDWlEbFS897ZBNy', 'taseercs66@gmail.com', '03479533623', '2025-02-11 22:55:06');
+(1, '../uploads/image1.jpg', 'Taseer Ullah', 'admin', '$2y$10$uhLDJjvEh1p1D7LOqB2Bx.wRLRjFK.4rQHSh6cnE3tjMoTTJ0b5Ja', 'taseercs66@gmail.com', '03479533623', '2025-02-11 22:55:06'),
+(2, '../uploads/junaid.jpg', 'Junaid Jadoon', 'junaidjaoon', '$2y$10$MenBIRovil1SRpZjK4K4rONIzoZIGYjKbrUFsGHssV629SoK35vHq', 'junaid@example.com', '0340009492', '2025-02-17 18:06:44'),
+(3, '../uploads/sikandar.jpg', 'Sikandar Iqbal', 'sikandariqbal', '$2y$10$SexGebBG6AA53YrzrMNeouEUvQWoNt5h2Wf9BJVjgHUC1GGK74shu', 'sikandar@example.com', '0987654321', '2025-02-17 18:06:44');
 
 -- --------------------------------------------------------
 
@@ -66,7 +68,8 @@ CREATE TABLE `buses` (
 INSERT INTO `buses` (`id`, `name`, `bus_type`, `total_seats`, `company_id`) VALUES
 (1, 'Daewoo Luxury', 'AC Sleeper', 40, 1),
 (2, 'Faisal Business', 'Business Class', 30, 2),
-(10, 'Skyblue', 'AC', 33, 10);
+(14, 'Skyblue', 'AC', 12, 11),
+(15, 'faisal', 'Luxury', 55, 4);
 
 -- --------------------------------------------------------
 
@@ -85,9 +88,12 @@ CREATE TABLE `bus_companies` (
 --
 
 INSERT INTO `bus_companies` (`id`, `name`, `contact_info`) VALUES
-(1, 'Daewoo Express', 'info@daewoo.com'),
-(2, 'Faisal Movers', 'contact@faisalmovers.com'),
-(10, 'Road Master', 'roadmaster@gmail.com');
+(1, 'Greyhound', NULL),
+(2, 'Megabus', NULL),
+(3, 'FlixBus', NULL),
+(4, 'Peter Pan', NULL),
+(5, 'BoltBus', NULL),
+(11, 'Road Master', 'roadmaster@gmail.com');
 
 -- --------------------------------------------------------
 
@@ -102,14 +108,6 @@ CREATE TABLE `bus_stops` (
   `arrival_time` time DEFAULT NULL,
   `departure_time` time DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `bus_stops`
---
-
-INSERT INTO `bus_stops` (`id`, `route_id`, `city_id`, `arrival_time`, `departure_time`) VALUES
-(1, 1, 1, '08:00:00', '08:15:00'),
-(2, 1, 2, '12:00:00', '12:15:00');
 
 -- --------------------------------------------------------
 
@@ -127,12 +125,14 @@ CREATE TABLE `cities` (
 --
 
 INSERT INTO `cities` (`id`, `name`) VALUES
-(1, 'Peshawar'),
-(2, 'Islamabad'),
-(3, 'Lahore'),
-(4, 'Karachi'),
-(5, 'Quetta'),
-(18, 'Karachi');
+(2, 'Los Angeles'),
+(3, 'Chicago'),
+(4, 'Houston'),
+(5, 'Phoenix'),
+(26, 'Charsadda'),
+(27, 'Karachi'),
+(28, 'Shabqader'),
+(29, 'Swabi');
 
 -- --------------------------------------------------------
 
@@ -152,10 +152,8 @@ CREATE TABLE `routes` (
 --
 
 INSERT INTO `routes` (`id`, `from_city_id`, `to_city_id`, `distance`) VALUES
-(1, 1, 2, 180),
 (2, 2, 3, 400),
-(3, 3, 4, 1100),
-(10, 18, 18, 12);
+(3, 3, 4, 1100);
 
 -- --------------------------------------------------------
 
@@ -177,9 +175,8 @@ CREATE TABLE `schedules` (
 --
 
 INSERT INTO `schedules` (`id`, `bus_id`, `route_id`, `departure_time`, `arrival_time`, `ticket_price`) VALUES
-(1, 1, 1, '2025-02-14 08:00:00', '2025-02-14 12:00:00', 1500.00),
 (2, 2, 2, '2025-02-14 14:00:00', '2025-02-14 20:00:00', 2200.00),
-(10, 10, 10, '2025-02-13 21:20:00', '2025-02-13 13:20:00', 667.00);
+(15, 1, 3, '2025-02-14 21:01:00', '2025-02-14 21:01:00', 2500.00);
 
 --
 -- Indexes for dumped tables
@@ -244,19 +241,19 @@ ALTER TABLE `schedules`
 -- AUTO_INCREMENT for table `admins`
 --
 ALTER TABLE `admins`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `buses`
 --
 ALTER TABLE `buses`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `bus_companies`
 --
 ALTER TABLE `bus_companies`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `bus_stops`
@@ -268,19 +265,19 @@ ALTER TABLE `bus_stops`
 -- AUTO_INCREMENT for table `cities`
 --
 ALTER TABLE `cities`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT for table `routes`
 --
 ALTER TABLE `routes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `schedules`
 --
 ALTER TABLE `schedules`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- Constraints for dumped tables
