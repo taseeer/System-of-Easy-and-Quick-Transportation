@@ -1,4 +1,3 @@
-Here's the updated version of your project README:
 
 ---
 
@@ -37,15 +36,17 @@ cd System-of-Easy-and-Quick-Transportation
   ```
 
 #### **3️⃣ Database Configuration**
-- Create a **new MySQL database** named `transportation_system`.
+- Create a **new MySQL database** named `bus_booking_system`.
 - Run the SQL script in `db/database.sql` to create the necessary tables.
 - Update the **`db/db_connect.php`** file with your MySQL database credentials.
 
 #### **4️⃣ Admin Email and Password**
 - The default admin login credentials are stored in the **.env** file for the admin:
   ```
-  ADMIN_EMAIL=admin@example.com
-  ADMIN_PASSWORD=your_password
+  ADMIN_EMAIL=junaid@example.com.com
+  ADMIN_PASSWORD=87654321
+   ADMIN_EMAIL=sikandar@example.com.com
+  ADMIN_PASSWORD=iqbal
   ```
 
 ---
