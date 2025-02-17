@@ -1,60 +1,66 @@
 <?php
 session_start();
+require '../config.php';
 require '../db/db_connect.php';
-require '../vendor/autoload.php'; // Include PHPMailer autoload file
-
+require '../vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $email = $_POST['email'];
+// Generate CSRF token if not set
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
 
-    // Check if email exists in the database
-    $sql = "SELECT id FROM admins WHERE email = '$email'";
-    $result = $conn->query($sql);
+// Check if request is POST
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        die("CSRF validation failed!");
+    }
+
+    $email = trim($_POST['email']);
+
+    $stmt = $conn->prepare("SELECT id FROM admins WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-        // Generate a 6-digit OTP
-        $otp = rand(100000, 999999);
-        $_SESSION['otp'] = $otp;
+        $otp = random_int(100000, 999999); // Secure OTP generation
+        $_SESSION['otp_hash'] = password_hash($otp, PASSWORD_BCRYPT);
         $_SESSION['email'] = $email;
+        $_SESSION['otp_expiry'] = time() + 300; // OTP valid for 5 minutes
 
-        // Send OTP via email using PHPMailer
         $mail = new PHPMailer(true);
 
         try {
-            // Server settings
             $mail->isSMTP();
-            $mail->Host = 'smtp.gmail.com'; // Replace with your SMTP server
+            $mail->Host = getenv('SMTP_HOST');
             $mail->SMTPAuth = true;
-            $mail->Username = 'taseercs66@gmail.com'; // Replace with your email
-            $mail->Password = ''; // Replace with your email password
+            $mail->Username = getenv('SMTP_USERNAME');
+            $mail->Password = getenv('SMTP_PASSWORD');
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port = 587;
 
-            // Enable debugging
-            $mail->SMTPDebug = 2; // Enable verbose debug output
+            $mail->setFrom(getenv('SMTP_USERNAME'), 'Admin Panel');
+            $mail->addAddress($email);
 
-            // Recipients
-            $mail->setFrom('taseercs66@gmail.com', 'Admin Panel');
-            $mail->addAddress($email); // Add a recipient
-
-            // Content
             $mail->isHTML(true);
             $mail->Subject = 'Password Reset OTP';
-            $mail->Body = "Your OTP for password reset is: <b>$otp</b>";
+            $mail->Body = "Your OTP for password reset is: <b>$otp</b>. It expires in 5 minutes.";
 
             $mail->send();
             header("Location: verify_otp.php");
             exit();
         } catch (Exception $e) {
-            $error = "Failed to send OTP. Error: " . $mail->ErrorInfo;
+            $error = "Failed to send OTP. Please try again. Error: " . $mail->ErrorInfo;
         }
     } else {
         $error = "Email not found!";
     }
 }
 ?>
+
+
 
 <!DOCTYPE html>
 <html>
@@ -75,20 +81,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       <?php if (isset($error)) echo "<p style='color:red; text-align: center;'>$error</p>"; ?>
 
       <form action="" method="POST">
-        <div class="input-group mb-3">
-          <input type="email" class="form-control" name="email" placeholder="Email" required>
-          <div class="input-group-append">
-            <div class="input-group-text">
-              <span class="fas fa-envelope"></span>
-            </div>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-12">
-            <button type="submit" class="btn btn-primary btn-block">Send OTP</button>
-          </div>
-        </div>
-      </form>
+  <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+  
+  <div class="input-group mb-3">
+    <input type="email" class="form-control" name="email" placeholder="Email" required>
+    <div class="input-group-append">
+      <div class="input-group-text">
+        <span class="fas fa-envelope"></span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col-12">
+      <button type="submit" class="btn btn-primary btn-block">Send OTP</button>
+    </div>
+  </div>
+</form>
+
     </div>
   </div>
 </div>

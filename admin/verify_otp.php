@@ -1,17 +1,15 @@
 <?php
 session_start();
-require '../db/db_connect.php';
 
-if (!isset($_SESSION['otp'])) {
-    header("Location: forgot_password.php");
+if (!isset($_SESSION['otp_hash']) || time() > $_SESSION['otp_expiry']) {
+    session_destroy();
+    header("Location: forgot_password.php?error=OTP Expired. Please try again.");
     exit();
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $user_otp = $_POST['otp'];
-
-    if ($user_otp == $_SESSION['otp']) {
-        // OTP is correct, redirect to reset password page
+    if (password_verify($_POST['otp'], $_SESSION['otp_hash'])) {
+        $_SESSION['verified'] = true;
         header("Location: reset_password.php");
         exit();
     } else {
@@ -57,8 +55,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   </div>
 </div>
 
-<script src="../admin/assets/plugins/jquery/jquery.min.js"></script>
-<script src="../admin/assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="../admin/assets/dist/js/adminlte.min.js"></script>
+<script src="assets/plugins/jquery/jquery.min.js"></script>
+<script src="assets/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="assets/dist/js/adminlte.min.js"></script>
 </body>
 </html>

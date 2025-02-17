@@ -2,7 +2,7 @@
 session_start();
 require '../db/db_connect.php';
 
-if (!isset($_SESSION['email'])) {
+if (!isset($_SESSION['email']) || !isset($_SESSION['verified'])) {
     header("Location: forgot_password.php");
     exit();
 }
@@ -11,26 +11,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $new_password = $_POST['new_password'];
     $confirm_password = $_POST['confirm_password'];
 
-    if ($new_password === $confirm_password) {
-        // Hash the new password
-        $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
-        $email = $_SESSION['email'];
+    // Password security: enforce length
+    if (strlen($new_password) < 8) {
+        $error = "Password must be at least 8 characters long.";
+    } elseif ($new_password !== $confirm_password) {
+        $error = "Passwords do not match!";
+    } else {
+        $hashed_password = password_hash($new_password, PASSWORD_BCRYPT);
+        $stmt = $conn->prepare("UPDATE admins SET password = ? WHERE email = ?");
+        $stmt->bind_param("ss", $hashed_password, $_SESSION['email']);
 
-        // Update the password in the database
-        $sql = "UPDATE admins SET password = '$hashed_password' WHERE email = '$email'";
-        if ($conn->query($sql)) {
-            // Password updated successfully
-            session_destroy(); // Clear session data
-            header("Location: login.php?reset=success");
+        if ($stmt->execute()) {
+            session_destroy();
+            header("Location: admin_login.php?reset=success");
             exit();
         } else {
             $error = "Failed to reset password. Please try again.";
         }
-    } else {
-        $error = "New password and confirm password do not match!";
     }
 }
 ?>
+
+
 
 <!DOCTYPE html>
 <html>
