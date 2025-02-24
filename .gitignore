@@ -10,3 +10,4 @@
 # Ignore composer files
 /composer.json
 /composer.lock
+/cmd.txt
